@@ -11,19 +11,20 @@ class BaseEncoder(nn.Module):
         self.swish = Swish()
         self.convs = nn.ModuleList([
             nn.Sequential(
-                # nn.ReflectionPad1d(2),
+                nn.ReflectionPad2d(2),
                 nn.Conv2d(
                     in_channels=1, 
                     out_channels=32,
-                    kernel_size=(5, 1),
-                    padding=(2, 0)
+                    kernel_size=(5, 5),
+                    padding=(0, 0)
                 ),
                 self.swish),
             nn.Sequential(
+                nn.ReflectionPad2d(2),
                 nn.Conv2d(
                     in_channels=32, 
                     out_channels=1, 
-                    kernel_size=(1, 1),
+                    kernel_size=(5, 5),
                     padding=(0, 0)
                 ),
                 self.swish),
@@ -59,7 +60,7 @@ class BaseEncoder(nn.Module):
             bidirectional=bidirectional
         )
         self.lstm3 = nn.LSTM(
-            input_size=projection_size*2,
+            input_size=projection_size,
             hidden_size=hidden_size,
             num_layers=1,
             batch_first=True,
@@ -92,7 +93,7 @@ class BaseEncoder(nn.Module):
         # )
         self.layer_norm1 = nn.LayerNorm(input_size)
         self.layer_norm2 = nn.LayerNorm(projection_size)
-        self.layer_norm3 = nn.LayerNorm(projection_size*2)
+        self.layer_norm3 = nn.LayerNorm(projection_size)
         self.layer_norm4 = nn.LayerNorm(projection_size)
         self.layer_norm5 = nn.LayerNorm(projection_size)
         # self.layer_norm6 = nn.LayerNorm(projection_size)
@@ -130,16 +131,13 @@ class BaseEncoder(nn.Module):
     def forward(self, inputs, input_lengths):
         assert inputs.dim() == 3
         inputs = inputs.unsqueeze(1)
-        # print('inputs1', np.shape(inputs))
         features = []
         for module in self.convs:
             inputs = module(inputs)
             features.append(inputs)
     
         outputs = features[-1]
-        # print('inputs2', np.shape(outputs))
         outputs = outputs.squeeze(1)
-
         outputs1 = self.layer_norm1(outputs)
         outputs1, _ = self.lstm1(outputs1)
         outputs1 = self.swish(self.proj_layer1(outputs1))
@@ -147,8 +145,8 @@ class BaseEncoder(nn.Module):
         # [B, L, 256]
         outputs2 = self.layer_norm2(outputs1)
         outputs2, _ = self.lstm2(outputs2)
-        outputs2 = self.swish(self.proj_layer2(outputs2))
-        outputs2 = self.time_reduction(outputs2)
+        outputs2 = 1/2 * self.swish(self.proj_layer2(outputs2)) + 1/2 * outputs1
+        # outputs2 = self.time_reduction(outputs2)
 
         # [B, L//2, 512]
         outputs3 = self.layer_norm3(outputs2)
@@ -158,7 +156,7 @@ class BaseEncoder(nn.Module):
         # [B, L//2, 256]
         outputs4 = self.layer_norm4(outputs3)
         outputs4, _ = self.lstm4(outputs4)
-        outputs4 = self.swish(self.proj_layer4(outputs4))
+        outputs4 = 1/2 * self.swish(self.proj_layer4(outputs4)) + 1/2 * outputs3
         # outputs4 = self.time_reduction(outputs4)
         
         # [B, L//2, 256]

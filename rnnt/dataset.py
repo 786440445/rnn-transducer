@@ -223,7 +223,7 @@ class AudioDataset(Dataset):
         features = self.build_LFR_features(features, self.merge_num, self.flat_num)
 
         origin_length = features.shape[0] if features.shape[0] <= self.max_input_length else self.max_input_length
-        inputs_length = math.ceil(features.shape[0] / 2) if features.shape[0] <= self.max_input_length else self.max_input_length / 2
+        inputs_length = math.ceil(features.shape[0]) if features.shape[0] <= self.max_input_length else self.max_input_length
         targets_length = targets_ids.shape[0] if targets_ids.shape[0] <= self.max_target_length else self.max_target_length
         
         features = self.pad(features, self.max_input_length).astype(np.float32)

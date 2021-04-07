@@ -7,11 +7,11 @@ data:
     left_context_width: 3
     right_context_width: 0
     frame_rate: 30
-    features_dim: 80
-    merge_num: 4
-    flat_num: 3
+    features_dim: 40
+    merge_num: 10
+    flat_num: 5
     apply_cmvn: True
-    max_input_length: 550
+    max_input_length: 320
     max_target_length: 50
     batch_size: 10
     short_first: True
@@ -48,7 +48,7 @@ model:
         inner_size: 1024
     vocab_size: 4337
     share_weight: False
-    input_size: 320
+    input_size: 400
     dropout: 0.2
 training:
     load_model: False
