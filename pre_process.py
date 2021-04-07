@@ -14,7 +14,7 @@ sys.path.append(home_dir)
 import codecs
 import json
 from collections import Counter
-import parser
+import argparse
 
 os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 
@@ -30,7 +30,7 @@ def generate_path_txt(category, dict):
             if label:
                 count += 1
                 data += cur_path + '\t' + label + '\n'
-    with open(os.path.join(home_dir, 'wav_txt', 'aishell.' + category), 'w', encoding='utf-8') as f:
+    with open(os.path.join(wav_data_dir, 'aishell.' + category), 'w', encoding='utf-8') as f:
         f.writelines(data)
 
 
@@ -65,7 +65,7 @@ def get_all_label(label):
 def obtain_language_txt():
     dev_data = ''
     train_data = ''
-    for path, dirs, files in os.walk(os.path.join(home_dir, 'wav_txt')):
+    for path, dirs, files in os.walk(wav_data_dir):
         for file in files:
             if file[-4:] == '.dev':
                 with open(os.path.join(path, file), 'r', encoding='utf-8') as f:
@@ -79,18 +79,24 @@ def obtain_language_txt():
                         line = line.strip().split()
                         label = ''.join(line[1:])
                         train_data += label + '\n'
-    with open(os.path.join(home_dir, 'lm_txt/train_lm.txt'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(txt_data_dir, 'train_lm.txt'), 'w', encoding='utf-8') as f:
         f.writelines(train_data[:-1])
-    with open(os.path.join(home_dir, 'lm_txt/dev_lm.txt'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(txt_data_dir, 'dev_lm.txt'), 'w', encoding='utf-8') as f:
         f.writelines(dev_data[:-1])
 
 
 if __name__ == '__main__':
-    parser = parser.ArgumentParser()
-    parser.add_argument('--data_dir', '/media/fengchengli/UUUU/speech_data/data_aishell')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_dir', default='/media/fengchengli/UUUU/speech_data/data_aishell')
 
     args = parser.parse_args()
     data_dir = args.data_dir
+    wav_data_dir = os.path.join(home_dir, 'wav_txt')
+    txt_data_dir = os.path.join(home_dir, 'lm_txt')
+    if not os.path.exists(wav_data_dir):
+        os.makedirs(wav_data_dir, exist_ok=True)
+    if not os.path.exists(txt_data_dir):
+        os.makedirs(txt_data_dir, exist_ok=True)
 
     dict = get_label_dict()
     generate_path_txt('train', dict)
