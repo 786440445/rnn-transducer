@@ -14,10 +14,9 @@ sys.path.append(home_dir)
 import codecs
 import json
 from collections import Counter
+import parser
 
-data_dir = '/media/fengchengli/UUUU/speech_data/data_aishell'
 os.environ['CUDA_VISIBLE_DEVICES'] = "0"
-
 
 # 生成wav-label path路径
 def generate_path_txt(category, dict):
@@ -87,9 +86,15 @@ def obtain_language_txt():
 
 
 if __name__ == '__main__':
+    parser = parser.ArgumentParser()
+    parser.add_argument('--data_dir', '/media/fengchengli/UUUU/speech_data/data_aishell')
+
+    args = parser.parse_args()
+    data_dir = args.data_dir
+
     dict = get_label_dict()
     generate_path_txt('train', dict)
     generate_path_txt('test', dict)
     generate_path_txt('dev', dict)
-    # get_all_label(dict)
+    get_all_label(dict)
     obtain_language_txt()
