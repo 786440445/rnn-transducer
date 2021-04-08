@@ -136,43 +136,44 @@ if __name__ == '__main__':
                 if i % 50 == 0:
                     summary_writer.add_scalar('loss', average_loss, (nums_batchs*epoch + i + 1))
 
-        # CTC 预测过程
-        dev_prefetcher = data_prefetcher(dev_data)
-        total_diff = 0
-        total_nums = 0
+        if average_loss < 2:
+            # CTC 预测过程
+            dev_prefetcher = data_prefetcher(dev_data)
+            total_diff = 0
+            total_nums = 0
 
-        while True:
-            inputs_x, targets_y, origin_length, inputs_length, targets_length = dev_prefetcher.next()
-            if inputs_x is None:
-                break
-            logits, _, _ = model(inputs_x, inputs_length)
-            preds = F.softmax(logits, dim=2).detach()
-            preds = torch.argmax(preds, dim=2)
-            preds = preds.cpu().numpy()
-            targets_y = targets_y.cpu().numpy()
-            def remove_blank(labels, blank=0):
-                new_labels = []
-                # 合并相同的标签
-                previous = None
-                for l in labels:
-                    if l != previous:
-                        new_labels.append(l)
-                        previous = l
-                # 删除blank
-                new_labels = [l for l in new_labels if l != blank]
-                return new_labels
-            pred_outs = [remove_blank(pred) for pred in preds]
-            targets_y = [remove_blank(label) for label in targets_y]
-            # print(''.join(dev_dataset.train_dataset.index2word.get(index) for index in pred_outs[0]))
-            # print(''.join(dev_dataset.train_dataset.index2word.get(index) for index in targets_y[0]))
-            diff, total = computer_cer(pred_outs, targets_y)
-            # print(diff)
-            # print(total)
-            total_diff += diff
-            total_nums += total
-        wer = total_diff / total_nums * 100
-        print('ctc model wer : {}%'.format(wer))
-        if wer < old_wer:
-            old_wer = wer
-        print('complete trained model save!')
-        torch.save(model.state_dict(), 'ctc_model/{}_{:.4f}_enecoder_model'.format(epoch+1, total_loss / nums_batchs))
+            while True:
+                inputs_x, targets_y, origin_length, inputs_length, targets_length = dev_prefetcher.next()
+                if inputs_x is None:
+                    break
+                logits, _, _ = model(inputs_x, inputs_length)
+                preds = F.softmax(logits, dim=2).detach()
+                preds = torch.argmax(preds, dim=2)
+                preds = preds.cpu().numpy()
+                targets_y = targets_y.cpu().numpy()
+                def remove_blank(labels, blank=0):
+                    new_labels = []
+                    # 合并相同的标签
+                    previous = None
+                    for l in labels:
+                        if l != previous:
+                            new_labels.append(l)
+                            previous = l
+                    # 删除blank
+                    new_labels = [l for l in new_labels if l != blank]
+                    return new_labels
+                pred_outs = [remove_blank(pred) for pred in preds]
+                targets_y = [remove_blank(label) for label in targets_y]
+                # print(''.join(dev_dataset.train_dataset.index2word.get(index) for index in pred_outs[0]))
+                # print(''.join(dev_dataset.train_dataset.index2word.get(index) for index in targets_y[0]))
+                diff, total = computer_cer(pred_outs, targets_y)
+                # print(diff)
+                # print(total)
+                total_diff += diff
+                total_nums += total
+            wer = total_diff / total_nums * 100
+            print('ctc model wer : {}%'.format(wer))
+            if wer < old_wer:
+                old_wer = wer
+            print('complete trained model save!')
+            torch.save(model.state_dict(), 'ctc_model/{}_{:.4f}_enecoder_model'.format(epoch+1, total_loss / nums_batchs))

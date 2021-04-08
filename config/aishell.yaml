@@ -14,7 +14,7 @@ data:
     max_input_length: 320
     max_target_length: 50
     batch_size: 10
-    short_first: True
+    short_first: False
     shuffle: True
     train: wav_txt/aishell.train
     dev: wav_txt/aishell.dev
