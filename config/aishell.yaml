@@ -7,14 +7,14 @@ data:
     left_context_width: 3
     right_context_width: 0
     frame_rate: 30
-    features_dim: 40
-    merge_num: 10
-    flat_num: 5
+    features_dim: 80
+    merge_num: 0
+    flat_num: 0
     apply_cmvn: True
-    max_input_length: 320
+    max_input_length: 1600
     max_target_length: 50
-    batch_size: 10
-    short_first: False
+    batch_size: 16
+    short_first: True
     shuffle: True
     train: wav_txt/aishell.train
     dev: wav_txt/aishell.dev
@@ -29,10 +29,10 @@ model:
     lm_pre_train: False
     lm_model_path: lm_model/decoder_LM_model
     ctc_pre_train: False
-    ctc_model_path: ctc_model2/6_0.1567_enecoder_model
+    ctc_model_path: ctc_model/5_0.4728_enecoder_model
     enc:
         type: lstm
-        hidden_size: 512
+        hidden_size: 768
         project_size: 256
         output_size: 320
         n_layers: 4
@@ -48,10 +48,10 @@ model:
         inner_size: 1024
     vocab_size: 4337
     share_weight: False
-    input_size: 400
+    input_size: 80
     dropout: 0.2
 training:
-    load_model: False
+    load_model: aishell/rnnt-model/epoch7_3.4151.chkpt
     load_encoder: False
     load_decoder: False
     eval_or_not: True
@@ -64,7 +64,7 @@ training:
     save_model: rnnt-model
 optim:
     type: adam
-    lr: 0.0005
+    lr: 0.0001
     momentum: 0.9
     decay_ratio: 0.5
     weight_decay: 0

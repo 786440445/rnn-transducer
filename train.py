@@ -34,7 +34,7 @@ def train(epoch, config, model, training_data, training_preferdata, optimizer, l
     step = 0
     while True:
         step += 1
-        inputs, origin_length, inputs_length, targets, targets_length = training_preferdata.next()
+        inputs, targets, origin_length, inputs_length, targets_length = training_preferdata.next()
         if inputs is None:
             break
         max_inputs_length = origin_length.cpu().numpy().max().item()
@@ -88,7 +88,7 @@ def eval(epoch, config, model, validating_data, logger, visualizer=None):
     total_dist = 0
     total_word = 0
     batch_steps = len(validating_data)
-    for step, (inputs, origin_length, inputs_length, targets, targets_length) in enumerate(validating_data):
+    for step, (inputs, targets, origin_length, inputs_length, targets_length) in enumerate(validating_data):
 
         if config.training.num_gpu > 0:
             inputs, inputs_length = inputs.cuda(), inputs_length.cuda()
@@ -113,7 +113,7 @@ def eval(epoch, config, model, validating_data, logger, visualizer=None):
             process = step / batch_steps * 100
             logger.info('-Validation-Epoch:%d(%.5f%%), CER: %.5f %%' % (epoch, process, cer))
 
-    val_loss = total_loss/(step+1)
+    val_loss = total_loss / batch_steps
     logger.info('-Validation-Epoch:%4d, AverageLoss:%.5f, AverageCER: %.5f %%' %
                 (epoch, val_loss, cer))
 

@@ -9,7 +9,7 @@
 =================================================='''
 import os, sys
 home_dir = os.getcwd()
-sys.path.append(home_dir)
+sys.path.append(home_dir)ß
 
 import codecs
 import json
@@ -46,7 +46,7 @@ def get_label_dict():
     return dict
 
 
-# 生成vocab文件
+# 生成vocab文件ßß
 def get_all_label(label):
     data = []
     for value in label.values():

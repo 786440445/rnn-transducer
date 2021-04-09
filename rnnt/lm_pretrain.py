@@ -23,7 +23,7 @@ from rnnt.decoder import build_decoder
 from rnnt.utils import AttrDict, count_parameters
 from rnnt.dataset import AudioDataset
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "2"
+os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 warnings.filterwarnings('ignore')
 
 
@@ -66,11 +66,15 @@ if __name__ == '__main__':
     batch_size = opt.batch_size
 
     model = build_decoder(config.model)
+    lm_dir = os.path.join(home_dir, 'lm_model')
+
+    if not os.path.exists(lm_dir):
+        os.makedirs(lm_dir)
     # 是否继续训练
     continue_train = False
     if continue_train:
         print('load lm pretrain model')
-        lm_path = os.path.join(home_dir, 'lm_model/decoder_LM_model')
+        lm_path = os.path.join(lm_dir,'decoder_LM_model')
         model.load_state_dict(torch.load(lm_path), strict=False)
 
     model.cuda()
@@ -117,8 +121,8 @@ if __name__ == '__main__':
     with torch.no_grad():
         with open(os.path.join(os.getcwd(), 'sample.txt'), 'w', encoding='utf-8') as f:
             # Set intial hidden ane cell states
-            state = (torch.zeros(1, 1, 300).to(device),
-                     torch.zeros(1, 1, 300).to(device))
+            state = (torch.zeros(1, 1, 512).to(device),
+                     torch.zeros(1, 1, 512).to(device))
 
             # Select one word id randomly
             prob = torch.ones(config.model.vocab_size)
@@ -143,5 +147,4 @@ if __name__ == '__main__':
 
     # Save the model checkpoints
     print('complete trained model save!')
-    torch.save(model.state_dict(), 'lm_model/decoder_LM_model')
-
+    torch.save(model.state_dict(), os.path.join(lm_dir, 'decoder_LM_model'))

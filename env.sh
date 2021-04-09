@@ -16,4 +16,7 @@ pip3 install specAugment==1.2.5
 # # http://pypi.douban.com/simple/
 # # https://pypi.tuna.tsinghua.edu.cn/simple
 
+git clone https://github.com/HawkAaron/warp-transducer.git
+cd warp-transducer
+
 sh ./egs/aishell/env.sh

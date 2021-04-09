@@ -20,15 +20,14 @@ from rnnt.model import Transducer
 from rnnt.utils import AttrDict, init_logger, count_parameters, computer_cer
 from rnnt.dataset import AudioDataset
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "1"
-
+os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 
 def test(config, model, test_dataset, validate_data, logger):
     total_dist = 0
     total_word = 0
 
     batch_steps = len(validate_data)
-    for step, (inputs, inputs_length, targets, targets_length) in enumerate(validate_data):
+    for step, (inputs, targets, origin_length, inputs_length, targets_length) in enumerate(validate_data):
         if config.training.num_gpu > 0:
             inputs, inputs_length = inputs.cuda(), inputs_length.cuda()
             targets, targets_length = targets.cuda(), targets_length.cuda()
@@ -60,12 +59,13 @@ def test(config, model, test_dataset, validate_data, logger):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-config', type=str, default='config/aishell.yaml')
+    parser.add_argument('-log', type=str, default='train.log')
     opt = parser.parse_args()
 
     configfile = open(opt.config)
     config = AttrDict(yaml.load(configfile, Loader=yaml.FullLoader))
 
-    exp_name = os.path.join('aishell/rnnt-model/epochs_1......')
+    exp_name = os.path.join('aishell/rnnt-model')
     if not os.path.isdir(exp_name):
         os.makedirs(exp_name)
     logger = init_logger(os.path.join(exp_name, opt.log))

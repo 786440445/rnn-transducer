@@ -220,10 +220,12 @@ class AudioDataset(Dataset):
         # features = self.concat_frame(features)
         # [L, 320]
         # features = self.subsampling(features)
-        features = self.build_LFR_features(features, self.merge_num, self.flat_num)
+        if self.merge_num != 0 or self.flat_num != 0:
+            features = self.build_LFR_features(features, self.merge_num, self.flat_num)
 
         origin_length = features.shape[0] if features.shape[0] <= self.max_input_length else self.max_input_length
-        inputs_length = math.ceil(features.shape[0]) if features.shape[0] <= self.max_input_length else self.max_input_length
+        inputs_length = math.ceil(features.shape[0] if features.shape[0] <= self.max_input_length else self.max_input_length)
+        inputs_length = inputs_length // 4
         targets_length = targets_ids.shape[0] if targets_ids.shape[0] <= self.max_target_length else self.max_target_length
         
         features = self.pad(features, self.max_input_length).astype(np.float32)
@@ -269,8 +271,8 @@ class AudioDataset(Dataset):
         :param wav_file: 文件路径
         :return: feature向量y
         """
-        signal, sample_rate = sf.read(audio_path)
-        # signal = self.load_randomly_augmented_audio(audio_path)
+        # signal, sample_rate = sf.read(audio_path)
+        signal = self.load_randomly_augmented_audio(audio_path)
         feature = logfbank(signal, 16000, nfilt=nfilt)
         feature = np.array(feature)
         feature = run_sepcagument(feature)

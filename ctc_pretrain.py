@@ -52,8 +52,8 @@ if __name__ == '__main__':
     # 是否继续训练
     continue_train = False
     epochs = 100
-    batch_size = 32
-    learning_rate = 0.001
+    batch_size = 64
+    learning_rate = 0.0001
     device = torch.device('cuda')
 
     opt = parser.parse_args()
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     model = build_encoder(config.model)
     if continue_train:
         print('load ctc pretrain model')
-        ctc_path = os.path.join(home_dir, '')
+        ctc_path = os.path.join(home_dir, 'ctc_model/9_0.6222_enecoder_model')
         model.load_state_dict(torch.load(ctc_path), strict=False)
 
     print(model)
@@ -78,12 +78,12 @@ if __name__ == '__main__':
     train_dataset = AudioDataset(config.data, 'train')
     training_data = torch.utils.data.DataLoader(
         train_dataset, batch_size=batch_size,
-        shuffle=config.data.shuffle, num_workers=16, pin_memory=True)
+        shuffle=config.data.shuffle, num_workers=32, pin_memory=True)
 
     dev_dataset = AudioDataset(config.data, 'dev')
     dev_data = torch.utils.data.DataLoader(
         dev_dataset, batch_size=batch_size,
-        shuffle=False, num_workers=8, pin_memory=True)
+        shuffle=False, num_workers=16, pin_memory=True)
 
     steps = len(train_dataset)
 
@@ -175,5 +175,8 @@ if __name__ == '__main__':
             print('ctc model wer : {}%'.format(wer))
             if wer < old_wer:
                 old_wer = wer
-            print('complete trained model save!')
-            torch.save(model.state_dict(), 'ctc_model/{}_{:.4f}_enecoder_model'.format(epoch+1, total_loss / nums_batchs))
+                print('complete trained model save!')
+                save_path = os.path.join(home_dir, 'ctc_model')
+                if not os.path.exists(save_path):
+                    os.makedirs(save_path)
+                torch.save(model.state_dict(), 'ctc_model/{}_{:.4f}_enecoder_model'.format(epoch+1, total_loss / nums_batchs))
