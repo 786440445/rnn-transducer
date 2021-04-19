@@ -99,7 +99,7 @@ if __name__ == '__main__':
             end_index = (i + 1) * batch_size
             inputs = inputs_x[:, i: i + seq_length].to(device)
             targets = inputs_x[:, i + 1: i + 1 + seq_length].to(device)
-            logits, outputs, hidden = model(inputs)
+            logits, outputs, hidden = model(inputs, length=None, hidden=None)
             loss = criterion(logits, targets.reshape(-1))
 
             # Backward and optimize
@@ -130,9 +130,9 @@ if __name__ == '__main__':
 
             for i in range(1000):
                 # Forward propagate RNN
-                output, y_mat, state = model(input, None, state)
+                logits, outputs, hidden = model(input, length=None, hidden=state)
                 # Sample a word id
-                prob = output.exp()
+                prob = logits.exp()
                 word_id = torch.multinomial(prob, num_samples=1).item()
                 # Fill input with sampled word id for the next time step
                 input.fill_(word_id)

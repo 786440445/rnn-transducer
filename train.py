@@ -41,7 +41,6 @@ def train(epoch, config, model, training_data, training_preferdata, optimizer, l
         max_targets_length = targets_length.cpu().numpy().max().item()
         inputs = inputs[:, :max_inputs_length, :]
         targets = targets[:, :max_targets_length]
-
         if config.optim.step_wise_update:
             optimizer.step_decay_lr()
 
@@ -82,7 +81,7 @@ def train(epoch, config, model, training_data, training_preferdata, optimizer, l
     return total_loss / batch_steps
 
 
-def eval(epoch, config, model, validating_data, logger, visualizer=None):
+def eval(epoch, config, model, validating_data, logger, dev_dataset, visualizer=None):
     model.eval()
     total_loss = 0
     total_dist = 0
@@ -100,10 +99,10 @@ def eval(epoch, config, model, validating_data, logger, visualizer=None):
         targets = targets[:, :max_targets_length]
 
         preds = model.recognize(inputs, inputs_length)
-
-        transcripts = [targets.cpu().numpy()[i][:targets_length[i].item()]
-                       for i in range(targets.size(0))]
-
+        transcripts = [targets.cpu().numpy()[i][:targets_length[i].item()] for i in range(targets.size(0))]
+        
+        print(''.join([dev_dataset.index2word.get(index) for index in preds[0]]))
+        print(''.join([dev_dataset.index2word.get(index) for index in transcripts[0]]))
         dist, num_words = computer_cer(preds, transcripts)
         total_dist += dist
         total_word += num_words
@@ -222,9 +221,9 @@ def main():
         train_loss = train(epoch, config, model, training_data, training_preferdata,
               optimizer, logger, visualizer)
 
-        if config.training.eval_or_not and train_loss < 40:
-            if train_loss < 10:
-                wer = eval(epoch, config, model, validate_data, logger, visualizer)
+        if config.training.eval_or_not and train_loss < 100:
+            if train_loss < 100:
+                wer = eval(epoch, config, model, validate_data, logger, dev_dataset, visualizer)
                 if wer < old_wer:
                     save_name = os.path.join(model_path, 'epoch%d_%.4f.chkpt' % (epoch, train_loss))
                     save_model(model, optimizer, config, save_name)

@@ -50,7 +50,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-config', type=str, default='config/aishell.yaml')
     # 是否继续训练
-    continue_train = False
+    continue_train = True
     epochs = 100
     batch_size = 64
     learning_rate = 0.0001
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     model = build_encoder(config.model)
     if continue_train:
         print('load ctc pretrain model')
-        ctc_path = os.path.join(home_dir, 'ctc_model/9_0.6222_enecoder_model')
+        ctc_path = os.path.join(home_dir, 'ctc_model/44_0.1983_enecoder_model')
         model.load_state_dict(torch.load(ctc_path), strict=False)
 
     print(model)
@@ -118,10 +118,9 @@ if __name__ == '__main__':
 
             inputs_x, ctc_length = inputs_x.cuda(), ctc_length.cuda()
             targets_y, targets_length = targets_y.cuda(), targets_length.cuda()
-
+            print('ctc_length', ctc_length.shape)
             logits, outputs, hidden = model(inputs_x, ctc_length)
             logits = logits.transpose(1, 0).log_softmax(2).requires_grad_()
-
             model.zero_grad()
             loss = ctc_loss(logits, targets_y, ctc_length, targets_length)
             loss.backward()
@@ -135,6 +134,15 @@ if __name__ == '__main__':
                       .format(epoch + 1, epochs, i, nums_batchs, param_group[0]['lr'], average_loss, loss.item(), np.exp(loss.item())))
                 if i % 50 == 0:
                     summary_writer.add_scalar('loss', average_loss, (nums_batchs*epoch + i + 1))
+        # def get_beam_result(preds, beam_size):
+        #     result = []
+        #     for pred in preds:
+        #         length = pred.size(0)
+        #         for index in range(length):
+        #             logits = pred[index, :]
+        #             local_best_scores, local_best_ids = torch.topk(logits, beam_size, dim=1)
+
+        #     pass
 
         if average_loss < 2:
             # CTC 预测过程
@@ -148,6 +156,7 @@ if __name__ == '__main__':
                     break
                 logits, _, _ = model(inputs_x, inputs_length)
                 preds = F.softmax(logits, dim=2).detach()
+                # preds = get_beam_result(preds, beam_size=10)
                 preds = torch.argmax(preds, dim=2)
                 preds = preds.cpu().numpy()
                 targets_y = targets_y.cpu().numpy()
@@ -164,8 +173,8 @@ if __name__ == '__main__':
                     return new_labels
                 pred_outs = [remove_blank(pred) for pred in preds]
                 targets_y = [remove_blank(label) for label in targets_y]
-                # print(''.join(dev_dataset.train_dataset.index2word.get(index) for index in pred_outs[0]))
-                # print(''.join(dev_dataset.train_dataset.index2word.get(index) for index in targets_y[0]))
+                print(''.join(dev_dataset.index2word.get(index) for index in pred_outs[0]))
+                print(''.join(dev_dataset.index2word.get(index) for index in targets_y[0]))
                 diff, total = computer_cer(pred_outs, targets_y)
                 # print(diff)
                 # print(total)

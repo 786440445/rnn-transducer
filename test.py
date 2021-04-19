@@ -39,8 +39,8 @@ def test(config, model, test_dataset, validate_data, logger):
         preds = model.recognize(inputs, inputs_length)
         transcripts = [targets.cpu().numpy()[i][:targets_length[i].item()]
                        for i in range(targets.size(0))]
-        # print(''.join([test_dataset.index2word.get(index) for index in preds[0]]))
-        # print(''.join([test_dataset.index2word.get(index) for index in transcripts[0]]))
+        print(''.join([test_dataset.index2word.get(index) for index in preds[0]]))
+        print(''.join([test_dataset.index2word.get(index) for index in transcripts[0]]))
 
         dist, num_words = computer_cer(preds, transcripts)
         total_dist += dist

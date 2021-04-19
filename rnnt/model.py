@@ -76,7 +76,7 @@ class Transducer(nn.Module):
         _, enc_state, _ = self.encoder(inputs, inputs_length)
         concat_targets = F.pad(targets, pad=(1, 0, 0, 0), value=0)
 
-        _, dec_state, _ = self.decoder(concat_targets, targets_length.add(1))
+        _, dec_state, _ = self.decoder(concat_targets, length=targets_length.add(1), hidden=None)
 
         logits = self.joint(enc_state, dec_state)
 
@@ -113,7 +113,6 @@ class Transducer(nn.Module):
                         token = token.cuda()
 
                     _, dec_state, hidden = self.decoder(token, hidden=hidden)
-
             return token_list
 
         results = []

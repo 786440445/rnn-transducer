@@ -225,7 +225,8 @@ class AudioDataset(Dataset):
 
         origin_length = features.shape[0] if features.shape[0] <= self.max_input_length else self.max_input_length
         inputs_length = math.ceil(features.shape[0] if features.shape[0] <= self.max_input_length else self.max_input_length)
-        inputs_length = inputs_length // 4
+        inputs_length = ((inputs_length - 3) // 2 + 1 - 3) // 2 + 1
+        # (l + 2*padding - k_s)/stride + 1 = (l-3)/2+1
         targets_length = targets_ids.shape[0] if targets_ids.shape[0] <= self.max_target_length else self.max_target_length
         
         features = self.pad(features, self.max_input_length).astype(np.float32)
@@ -275,10 +276,9 @@ class AudioDataset(Dataset):
         signal = self.load_randomly_augmented_audio(audio_path)
         feature = logfbank(signal, 16000, nfilt=nfilt)
         feature = np.array(feature)
-        feature = run_sepcagument(feature)
         if normalize:
-            preprocessing.scale(feature)
-        return feature
+            feature = preprocessing.scale(feature)
+        return run_sepcagument(feature)
 
     def get_fbank_features_dev(self, audio_path, nfilt=200, normalize=True):
         """
@@ -286,13 +286,13 @@ class AudioDataset(Dataset):
         :param wav_file: 文件路径
         :return: feature向量y
         """
-        signal = self.load_audio(audio_path)
-        # signal, sample_rate = sf.read(audio_path)
+        # signal = self.load_audio(audio_path)
+        signal, sample_rate = sf.read(audio_path)
         feature = logfbank(signal, 16000, nfilt=nfilt)
         feature = np.array(feature)
         # feature = run_sepcagument(feature)
         if normalize:
-            preprocessing.scale(feature)
+            feature = preprocessing.scale(feature)
         return feature
 
     # 语音增益 与 语速增益
@@ -306,8 +306,7 @@ class AudioDataset(Dataset):
         tempo_value = np.random.uniform(low=low_tempo, high=high_tempo)
         low_gain, high_gain = gain_range
         gain_value = np.random.uniform(low=low_gain, high=high_gain)
-        audio = self.augment_audio_with_sox(path=path, sample_rate=sample_rate,
-                                            tempo=tempo_value, gain=gain_value)
+        audio = self.augment_audio_with_sox(path=path, sample_rate=sample_rate, tempo=tempo_value, gain=gain_value)
         return audio
 
     def augment_audio_with_sox(self, path, sample_rate, tempo, gain):
@@ -321,8 +320,9 @@ class AudioDataset(Dataset):
                                                                                           augmented_filename,
                                                                                           " ".join(sox_augment_params))
             os.system(sox_params)
-            y = self.load_audio(augmented_filename)
-            return y
+            signal, sample_rate = sf.read(augmented_filename)
+            # y = self.load_audio(augmented_filename)
+            return signal
 
     def load_audio(self, path):
         sound, _ = torchaudio.load(path)
