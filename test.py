@@ -12,6 +12,8 @@ home_dir = os.getcwd()
 sys.path.append(home_dir)
 
 import torch
+# torch.cuda.set_device(0)
+
 import yaml
 import shutil
 import argparse
@@ -20,12 +22,12 @@ from rnnt.model import Transducer
 from rnnt.utils import AttrDict, init_logger, count_parameters, computer_cer
 from rnnt.dataset import AudioDataset
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "0"
+# os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 
 def test(config, model, test_dataset, validate_data, logger):
+    model.eval()
     total_dist = 0
     total_word = 0
-
     batch_steps = len(validate_data)
     for step, (inputs, targets, origin_length, inputs_length, targets_length) in enumerate(validate_data):
         if config.training.num_gpu > 0:
@@ -34,7 +36,7 @@ def test(config, model, test_dataset, validate_data, logger):
 
         max_inputs_length = inputs_length.max().item()
         max_targets_length = targets_length.max().item()
-        inputs = inputs[:, :max_inputs_length, :]
+        # inputs = inputs[:, :max_inputs_length, :]
         targets = targets[:, :max_targets_length]
         preds = model.recognize(inputs, inputs_length)
         transcripts = [targets.cpu().numpy()[i][:targets_length[i].item()]
@@ -51,10 +53,8 @@ def test(config, model, test_dataset, validate_data, logger):
             process = step / batch_steps * 100
             logger.info('-Validation-Epoch:%d(%.5f%%), CER: %.5f %%' % (1, process, cer))
 
-    logger.info('-Validation-Epoch:%4d, AverageCER: %.5f %%' %
-                (1, cer))
-    return
-
+    logger.info('-Validation-Epoch:%4d, AverageCER: %.5f %%' %(1, cer))
+    return cer
 
 def main():
     parser = argparse.ArgumentParser()
@@ -64,7 +64,7 @@ def main():
 
     configfile = open(opt.config)
     config = AttrDict(yaml.load(configfile, Loader=yaml.FullLoader))
-
+    
     exp_name = os.path.join('aishell/rnnt-model')
     if not os.path.isdir(exp_name):
         os.makedirs(exp_name)
@@ -76,7 +76,7 @@ def main():
     # 测试数据集
     test_dataset = AudioDataset(config.data, 'test')
     validate_data = torch.utils.data.DataLoader(
-        test_dataset, batch_size=config.data.batch_size * config.training.num_gpu,
+        test_dataset, batch_size=config.data.batch_size,
         shuffle=False, num_workers=4)
     logger.info('Load Dev Set!')
 
@@ -120,7 +120,7 @@ def main():
     logger.info('# the number of parameters in the Decoder: %d' % dec)
     logger.info('# the number of parameters in the JointNet: %d' %
                 (n_params - dec - enc))
-
+    
     cer = test(config, model, test_dataset, validate_data, logger)
     logger.info('# Test CER: %.5f%%' % (cer))
 

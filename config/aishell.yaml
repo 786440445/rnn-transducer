@@ -26,9 +26,9 @@ data:
     BLANK_INDEX: 4
 model:
     type: transducer
-    lm_pre_train: True
+    lm_pre_train: False
     lm_model_path: lm_model/decoder_LM_model
-    ctc_pre_train: True
+    ctc_pre_train: False
     ctc_model_path: ctc_model/44_0.1983_enecoder_model
     enc:
         type: lstm
@@ -52,7 +52,7 @@ model:
     input_size: 80
     dropout: 0.2
 training:
-    load_model: False
+    load_model: aishell/rnnt-model/epoch20_0.9127.chkpt
     load_encoder: False
     load_decoder: False
     eval_or_not: True

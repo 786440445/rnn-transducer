@@ -47,3 +47,7 @@
     4. 需要先将编码器encoder loss训练到最优地步，loss<0.1
     5. decoder训练到loss<2
     6. 联合encoder，decoder，进行训练
+
+
+实验结果：
+rnnt 第一版 wer=12.31
